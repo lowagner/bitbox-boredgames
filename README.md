@@ -7,8 +7,6 @@ Now, when someone tells you to go play your bored games, you can.
 
 The mighty tetromino game.
 
-## screenshots
-
 Solo play:  
 ![Screenshot](https://raw.githubusercontent.com/lowagner/bitbox-tetris/master/SoloPlay.png)
 
@@ -17,3 +15,10 @@ Duel play:
 
 Coop play:  
 ![Screenshot](https://raw.githubusercontent.com/lowagner/bitbox-tetris/master/CoopPlay.png)
+
+
+## snake
+
+Also has duel and coop play.
+
+![Screenshot](https://raw.githubusercontent.com/lowagner/bitbox-snake/master/snake383.png)
