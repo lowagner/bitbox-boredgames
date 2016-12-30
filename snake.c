@@ -125,8 +125,8 @@ void init_snake(int p, uint8_t y, uint8_t x, uint8_t heading, int32_t size)
     snake[p].head.x = snake[p].tail.x = x;
     snake[p].properties = 0;
     snake[p].heading = heading;
-    if (size <= 0)
-        size = 1;
+    if (size < 0)
+        size = 0;
     snake[p].tail_wait = size;
     snake[p].alive = 1;
     game.super[y][x] = 5+5*p + heading;
@@ -393,12 +393,13 @@ void do_snake_dynamics()
             for (; b<BULLETS; ++b)
                 if (!bullet[p][b].alive)
                     break;
-            if (b < BULLETS)
+            if (b < BULLETS && (snake[p].head.x != snake[p].tail.x || snake[p].head.y != snake[p].tail.y))
             {   // found a dead bullet to use
                 bullet[p][b].alive = BULLET_LIFE;
                 bullet[p][b].heading = snake[p].heading;
                 bullet[p][b].y = snake[p].head.y;
                 bullet[p][b].x = snake[p].head.x;
+                --snake[p].tail_wait;
                 // push the bullet in front of player
                 switch (bullet[p][b].heading)
                 {
