@@ -307,15 +307,15 @@ void menu_line()
             font_render_line_doubled((const uint8_t *)"dpad:change options", 44, internal_line, 65535, BG_COLOR*257);
         break;
         case 17:
-            font_render_line_doubled((const uint8_t *)"select:music test", 44, internal_line, 65535, BG_COLOR*257);
+            font_render_line_doubled((const uint8_t *)"start:play", 44, internal_line, 65535, BG_COLOR*257);
         break;
         case 18:
             if (menu_index == 8)
-                font_render_line_doubled((const uint8_t *)"start:edit palette", 44, internal_line, 65535, BG_COLOR*257);
+                font_render_line_doubled((const uint8_t *)"select:edit palette", 44, internal_line, 65535, BG_COLOR*257);
             else if (menu_index >= 6)
-                font_render_line_doubled((const uint8_t *)"start:edit music", 44, internal_line, 65535, BG_COLOR*257);
+                font_render_line_doubled((const uint8_t *)"select:edit music", 44, internal_line, 65535, BG_COLOR*257);
             else
-                font_render_line_doubled((const uint8_t *)"start:play", 44, internal_line, 65535, BG_COLOR*257);
+                font_render_line_doubled((const uint8_t *)"select:music test", 44, internal_line, 65535, BG_COLOR*257);
         break;
     }
 }
@@ -530,10 +530,6 @@ void menu_controls()
         // start game
         load_song(0); // load song but don't play
         previous_visual_mode = MainMenu;
-        if (menu_index == 8)
-            return game_switch(EditPalette);
-        if (menu_index >= 6)
-            return game_switch(EditAnthem);
         switch (game_to_play)
         {
             case MaybeTetris:
@@ -546,7 +542,12 @@ void menu_controls()
     }
     if (GAMEPAD_PRESS(0, select))
     {
-        load_song(1); // load and play
+        if (menu_index == 8)
+            return game_switch(EditPalette);
+        load_song(0);
+        if (menu_index >= 6)
+            return game_switch(EditAnthem);
+        chip_play_init(0);
         return;
     }
 }
