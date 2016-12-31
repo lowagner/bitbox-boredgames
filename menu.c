@@ -314,7 +314,7 @@ void menu_line()
                 font_render_line_doubled((const uint8_t *)"select:edit palette", 44, internal_line, 65535, BG_COLOR*257);
             else if (menu_index >= 6)
                 font_render_line_doubled((const uint8_t *)"select:edit music", 44, internal_line, 65535, BG_COLOR*257);
-            else
+            else if (available_count)
                 font_render_line_doubled((const uint8_t *)"select:music test", 44, internal_line, 65535, BG_COLOR*257);
         break;
     }

@@ -3,7 +3,7 @@
 USE_SDCARD = 1      # allow use of SD card for io
 #DEFINES += DEBUG_CHIPTUNE
 
-NAME = bordgame
+NAME = bored
 # font files need to be first in order to be generated first:
 GAME_C_FILES = font.c name.c tetris.c snake.c io.c menu.c palette.c \
     chiptune.c verse.c instrument.c anthem.c main.c

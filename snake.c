@@ -134,6 +134,7 @@ void init_snake(int p, uint8_t y, uint8_t x, uint8_t heading, int32_t size)
 
 void kill_snake(int p)
 {
+    game.super[snake[p].head.y][snake[p].head.x] = 2;
     snake[p].alive = 0;
     if (p < 2)
         end_player(p);
@@ -315,21 +316,37 @@ void do_snake_dynamics()
             }
             
             // check collisions on new spot first:
-            if (game.super[snake[p].head.y][snake[p].head.x] != 0)
+            uint8_t value;
+            if ((value=game.super[snake[p].head.y][snake[p].head.x]))
             {
-                if (game.super[snake[p].head.y][snake[p].head.x] == 3)
+                if (value < 5)
                 {
-                    ++snake[p].tail_wait;
-                    make_food(1);
+                    switch (value)
+                    {
+                        case 1: // wall
+                        case 2: // indestructible wall
+                            kill_snake(p);
+                            continue;
+                        break;
+                        case 3:
+                            ++snake[p].tail_wait;
+                            make_food(1);
+                        break;
+                        case 4:
+                            message("bullet kill\n");
+                            kill_snake(p);
+                            continue;
+                        break;
+                    }
                 }
                 else
                 {
-                    for (int other_p=0; other_p<p; ++other_p)
-                    if (snake[other_p].alive && snake[p].head.x == snake[other_p].head.x && snake[p].head.y == snake[other_p].head.y )
+                    int other_p = value/5-1;
+                    if (snake[other_p].alive && snake[p].head.x == snake[other_p].head.x && snake[p].head.y == snake[other_p].head.y)
                     {
                         kill_snake(other_p);
                         message("snake battle!  both die.\n");
-                        game.super[snake[p].head.y][snake[p].head.x] = 1;
+                        continue;
                     }
                     kill_snake(p);
                     continue;
