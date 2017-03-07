@@ -18,6 +18,8 @@ uint32_t snake_scores[2];
 uint32_t top_snake_scores[2];
 uint64_t top_coop_snake_score;
 uint64_t top_wide_snake_score;
+uint64_t snake_score CCM_MEMORY;
+uint32_t snake_scores[2] CCM_MEMORY;
 
 // game variables
 uint8_t snake_players CCM_MEMORY;
@@ -33,7 +35,7 @@ struct snake {
     struct {
         uint8_t y, x;
     } tail;
-    uint8_t properties;
+    uint8_t all_out;
     uint8_t heading; // direction that the snake is going.
     uint8_t alive;
     uint8_t bullets;
@@ -123,7 +125,7 @@ void init_snake(int p, uint8_t y, uint8_t x, uint8_t heading, int32_t size)
 {
     snake[p].head.y = snake[p].tail.y = y;
     snake[p].head.x = snake[p].tail.x = x;
-    snake[p].properties = 0;
+    snake[p].all_out = 0;
     snake[p].heading = heading;
     if (size < 0)
         size = 0;
@@ -187,6 +189,7 @@ int zip_snake(int p, uint8_t y, uint8_t x, uint8_t color)
     }
     // remove any wait from the tail
     snake[p].tail_wait = 0;
+    snake[p].all_out = 1;
     return 0;
 }
 
@@ -224,6 +227,11 @@ void snake_init()
 
 void snake_start()
 {
+    // reset score
+    snake_score = 0;
+    snake_scores[0] = 0;
+    snake_scores[1] = 0;
+
     // get rid of bullets:
     for (int p=0; p<2; ++p)
     for (int b=0; b<BULLETS; ++b)
@@ -328,8 +336,10 @@ void do_snake_dynamics()
                             kill_snake(p);
                             continue;
                         break;
-                        case 3:
+                        case 3: // eat food
                             ++snake[p].tail_wait;
+                            snake_scores[p] += (10 - snake_speed)*(1+16/snake_food_count);
+                            message("snake %d got score %d\n", p, snake_scores[p]);
                             make_food(1);
                         break;
                         case 4:
@@ -359,7 +369,14 @@ void do_snake_dynamics()
 
             // finished with the snake's head, now go onto the snake's tail!
             if (snake[p].tail_wait > 0)
+            {
                 --snake[p].tail_wait;
+                if (snake[p].tail_wait == 0 && snake[p].all_out == 0)
+                {
+                    snake[p].all_out = 1;
+                    snake_scores[p] += snake_starting_size + snake_starting_size*snake_starting_size/512;
+                }
+            }
             else
             {
                 while (snake[p].tail_wait <= 0)
@@ -412,6 +429,8 @@ void do_snake_dynamics()
                     break;
             if (b < BULLETS && (snake[p].head.x != snake[p].tail.x || snake[p].head.y != snake[p].tail.y))
             {   // found a dead bullet to use
+                if (snake_scores[p] > 0)
+                    --snake_scores[p];
                 bullet[p][b].alive = BULLET_LIFE;
                 bullet[p][b].heading = snake[p].heading;
                 bullet[p][b].y = snake[p].head.y;
@@ -498,11 +517,14 @@ int do_bullet_dynamics()
             {
                 case 1: // destructible
                     game.super[bullet[p][b].y][bullet[p][b].x] = 0;
+                    ++snake_scores[p];
                 break;
                 case 2: // indestructible, ignore!  can't shoot through, either.
                 break;
-                case 3: // food
+                case 3: // destroy food
                     game.super[bullet[p][b].y][bullet[p][b].x] = 0;
+                    if (snake_scores[p])
+                        --snake_scores[p];
                 break;
                 case 4: // bullet
                     // find the other bullet and kill it
@@ -523,12 +545,28 @@ int do_bullet_dynamics()
                     if ((pc%5 < 4) && snake[other_p].alive)
                     {
                         if (bullet[p][b].y == snake[other_p].head.y && bullet[p][b].x == snake[other_p].head.x)
+                        {
                             kill_snake(other_p); 
+                            if (game_wide)
+                            {
+                                if (snake_scores[p])
+                                    --snake_scores[p];
+                            }
+                            else
+                                snake_scores[p] += 150;
+                        }
                         else // was not the head, zip up tail to where bullet hit
                         {
                             if (zip_snake(other_p, bullet[p][b].y, bullet[p][b].x, 9+5*other_p))
                                 return 1;
                             snake[other_p].tail_wait = -1; // tail will jump forward one
+                            if (game_wide)
+                            {
+                                if (snake_scores[p])
+                                    --snake_scores[p];
+                            }
+                            else
+                                snake_scores[p] += 15;
                         }
                         // don't blank the spot, since the tail needs to zip past its encoding
                     }
@@ -593,4 +631,26 @@ void snake_line()
 
 void snake_finalize()
 {
+    if (game_wide && snake_players > 1)
+    {
+        snake_score = snake_scores[0]*snake_scores[1];
+        if (snake_score > top_coop_snake_score)
+        {
+            top_coop_snake_score = snake_score;
+            strcpy((char *)game_message, "new top snake_score!");
+        }
+    }
+    else
+    {
+        if (snake_scores[0] > top_snake_scores[0])
+        {
+            top_snake_scores[0] = snake_scores[0];
+            strcpy((char *)game_message, "new top score!");
+        }
+        if (snake_players > 1 && snake_scores[1] > top_snake_scores[1])
+        {
+            top_snake_scores[1] = snake_scores[1];
+            strcpy((char *)game_message, "new top score!");
+        }
+    }
 }

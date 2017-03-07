@@ -132,7 +132,7 @@ void menu_line()
             }
             if (p == 1)
             {
-                if (game_wide)
+                if (game_wide && game_to_play == MaybeTetris)
                 {
                     font_render_line_doubled((const uint8_t *)"wide", 52, internal_line, menu_index == 1 ? SELECT_COLOR :
                         65535, BG_COLOR*257);
@@ -457,12 +457,14 @@ void menu_controls()
                         if (snake_starting_size >= 13000)
                             break;
                         snake_starting_size += option_increment(snake_starting_size);
+                        message("starting size is now %d\n", snake_starting_size);
                     }
                     else
                     {
                         if (snake_starting_size <= 1)
                             break;
                         snake_starting_size -= option_decrement(snake_starting_size);
+                        message("starting size is now %d\n", snake_starting_size);
                     }
                 break;
             }
@@ -479,12 +481,14 @@ void menu_controls()
                         if (snake_food_count >= 11000)
                             break;
                         snake_food_count += option_increment(snake_food_count);
+                        message("food is now %d\n", snake_food_count);
                     }
                     else
                     {
                         if (snake_food_count <= 1)
                             break;
                         snake_food_count -= option_decrement(snake_food_count);
+                        message("food is now %d\n", snake_food_count);
                     }
                 break;
             }
