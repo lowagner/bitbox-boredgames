@@ -18,6 +18,7 @@ VisualMode visual_mode CCM_MEMORY;
 VisualMode previous_visual_mode CCM_MEMORY;
 VisualMode old_visual_mode CCM_MEMORY;
 uint8_t game_message[32] CCM_MEMORY;
+int game_message_timeout CCM_MEMORY;
 uint8_t player_message[2][16] CCM_MEMORY;
 uint8_t *player_message_start[2] CCM_MEMORY;
 uint16_t old_gamepad[2] CCM_MEMORY;
@@ -71,10 +72,10 @@ void game_init()
         base_filename[4] = 0;
 
         // need to reset everything
-        palette_reset();
-        anthem_reset();
-        verse_reset();
-        instrument_reset();
+        palette_load_default();
+        anthem_load_default();
+        verse_load_default();
+        instrument_load_default();
     }
     else // there was a filename to look into
     {
@@ -83,6 +84,7 @@ void game_init()
         io_load_verse(16);
         io_load_instrument(16);
     }
+    io_list_games();
 
     // init game mode
     old_visual_mode = None;
@@ -129,6 +131,9 @@ void game_frame()
     
     if (gamepad_press_wait)
         --gamepad_press_wait;
+    
+    if (game_message_timeout && --game_message_timeout == 0)
+        game_message[0] = 0; 
 }
 
 void graph_line() 

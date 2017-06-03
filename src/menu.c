@@ -270,16 +270,16 @@ void menu_line()
         }
         break;
         case 11:
-        if (available_count)
+        if (base_filename[0])
         {
             uint8_t msg[24] = { 'm', 'u', 's', 'i', 'c', ' ' };
-            strcpy((char *)msg+6, available_filenames[available_index]);
+            strcpy((char *)msg+6, base_filename);
             font_render_line_doubled(msg, 52, internal_line, menu_index == 6 ? SELECT_COLOR :
                 65535, BG_COLOR*257);
         }
         break;
         case 12:
-        if (available_count)
+        if (base_filename[0])
         {
             uint8_t msg[] = { 'v', 'o', 'l', 'u', 'm', 'e', ' ', 
                 hex[chip_volume/16], hex[chip_volume % 16], 
@@ -289,7 +289,7 @@ void menu_line()
         }
         break;
         case 14:
-        if (available_count)
+        if (base_filename[0])
         {
             font_render_line_doubled((const uint8_t *)"palette", 52, internal_line, menu_index == 8 ? SELECT_COLOR :
                 65535, BG_COLOR*257);
@@ -307,14 +307,15 @@ void menu_line()
             font_render_line_doubled((const uint8_t *)"dpad:change options", 44, internal_line, 65535, BG_COLOR*257);
         break;
         case 17:
-            font_render_line_doubled((const uint8_t *)"start:play", 44, internal_line, 65535, BG_COLOR*257);
+            if (menu_index == 8)
+                font_render_line_doubled((const uint8_t *)"start:edit palette", 44, internal_line, 65535, BG_COLOR*257);
+            else if (menu_index >= 6)
+                font_render_line_doubled((const uint8_t *)"start:edit music", 44, internal_line, 65535, BG_COLOR*257);
+            else
+                font_render_line_doubled((const uint8_t *)"start:play", 44, internal_line, 65535, BG_COLOR*257);
         break;
         case 18:
-            if (menu_index == 8)
-                font_render_line_doubled((const uint8_t *)"select:edit palette", 44, internal_line, 65535, BG_COLOR*257);
-            else if (menu_index >= 6)
-                font_render_line_doubled((const uint8_t *)"select:edit music", 44, internal_line, 65535, BG_COLOR*257);
-            else if (available_count)
+            if (base_filename[0])
                 font_render_line_doubled((const uint8_t *)"select:music test", 44, internal_line, 65535, BG_COLOR*257);
         break;
     }
@@ -323,9 +324,8 @@ void menu_line()
 void load_song(int init_also)
 {
     chip_kill();
-    if (strcmp(base_filename, available_filenames[available_index]))
+    if (strcmp(base_filename, old_base_filename))
     {
-        strcpy(base_filename, available_filenames[available_index]);
         io_load_instrument(16);
         io_load_verse(16);
         io_load_anthem();
@@ -356,7 +356,7 @@ void menu_controls()
     if (GAMEPAD_PRESS(0, down))
     {
         ++menu_index;
-        if (available_count)
+        if (base_filename[0])
         {
             if (menu_index >= MENU_OPTIONS)
                 menu_index = 0;
@@ -371,7 +371,7 @@ void menu_controls()
     {
         if (menu_index)
             --menu_index;
-        else if (available_count)
+        else if (base_filename[0])
             menu_index = MENU_OPTIONS-1;
         else
             menu_index = MENU_OPTIONS-4;
@@ -494,25 +494,13 @@ void menu_controls()
             }
             break;
             case 6: // switch song
-                if (available_count == 0)
+                if (base_filename[0] == 0)
                     break;
                 chip_kill();
                 if (modified > 0)
-                {
-                    if (++available_index >= available_count)
-                        available_index = 0;
-                }
-                else if (available_index)
-                    --available_index;
+                    io_next_available_filename();
                 else
-                    available_index = available_count-1;
-                {
-                char old[16];
-                strcpy(old, base_filename);
-                strcpy(base_filename, available_filenames[available_index]);
-                io_load_palette();
-                strcpy(base_filename, old);
-                }
+                    io_previous_available_filename();
             break;
             case 7: // switch volume
                 if (modified > 0)
@@ -531,8 +519,12 @@ void menu_controls()
     }
     if (GAMEPAD_PRESS(0, start))
     {
+        if (menu_index == 8)
+            return game_switch(EditPalette);
         // start game
         load_song(0); // load song but don't play
+        if (menu_index >= 6)
+            return game_switch(EditAnthem);
         previous_visual_mode = MainMenu;
         switch (game_to_play)
         {
@@ -545,13 +537,5 @@ void menu_controls()
         }
     }
     if (GAMEPAD_PRESS(0, select))
-    {
-        if (menu_index == 8)
-            return game_switch(EditPalette);
-        load_song(0);
-        if (menu_index >= 6)
-            return game_switch(EditAnthem);
-        chip_play_init(0);
-        return;
-    }
+        return load_song(1);
 }

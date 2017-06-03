@@ -2,11 +2,10 @@
 #define IO_H
 
 #include <stdint.h>
+#define MAX_FILES 1024
 
 extern char base_filename[9];
-extern char available_filenames[255][9];
-extern uint8_t available_index;
-extern uint8_t available_count;
+extern char old_base_filename[9];
 
 typedef enum {
     NoError = 0,
@@ -32,5 +31,7 @@ FileError io_save_verse(unsigned int i);
 FileError io_load_verse(unsigned int i);
 FileError io_save_anthem();
 FileError io_load_anthem();
-
+void io_list_games();
+void io_next_available_filename();
+void io_previous_available_filename();
 #endif

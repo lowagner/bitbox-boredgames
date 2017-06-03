@@ -1,6 +1,7 @@
 #ifndef COMMON_H
 #define COMMON_H
 #include <stdint.h>
+#include <string.h>
 
 #define SCREEN_W 320
 #define SCREEN_H 240
@@ -56,6 +57,7 @@ extern uint16_t old_gamepad[2];
 extern uint8_t player_message[2][16];
 extern uint8_t *player_message_start[2];
 extern uint8_t game_message[32];
+extern int game_message_timeout;
 extern const uint8_t hex[64]; // not exactly hex but ok!
 
 // various game parameters
@@ -77,4 +79,11 @@ void end_player(int p);
 
 int handle_special_state();
 
+inline void set_game_message_timeout(const char *msg, int timeout)
+{
+    strcpy((char *)game_message, msg);
+    game_message_timeout = timeout;
+}
+
+#define MESSAGE_TIMEOUT (10*64)
 #endif
