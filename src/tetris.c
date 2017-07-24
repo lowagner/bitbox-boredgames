@@ -81,7 +81,6 @@ void tetris_start()
     player_message[1][0] = '0';
     player_message[1][1] = 0;
 
-    chip_play_init(0);
     // also setup play game.field, up to tetris_start_height
     memset(game.field, 0, sizeof(game.field));
     for (int y=HOLE_Y-tetris_start_height; y<HOLE_Y; ++y)
@@ -2757,24 +2756,6 @@ void move_down_maybe()
 
 void tetris_controls()
 {
-    //gamepad_buttons[1] = gamepad_buttons[0]; // DEBUG
-
-    if (GAMEPAD_PRESS(0, start))
-    {
-        if (GAMEPAD_PRESSED(0, select) || game_win_state)
-        {
-            player_message[0][0] = 0;
-            game_paused = 0;
-            previous_visual_mode = None;
-            game_switch(MainMenu);
-            return;
-        }
-        // pause mode
-        chip_play = game_paused;
-        game_paused = 1 - game_paused;
-        return;
-    }
-
     if (handle_special_state())
         return;
 

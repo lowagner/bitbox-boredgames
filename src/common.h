@@ -3,6 +3,9 @@
 #include <stdint.h>
 #include <string.h>
 
+#define MAX_GUNNERS 16
+#define MAX_BULLETS 4
+
 #define SCREEN_W 320
 #define SCREEN_H 240
 
@@ -23,10 +26,18 @@ extern uint8_t game_to_play;
 extern uint8_t game_paused;
 extern int8_t game_win_state;
 
+struct bullet {
+    uint8_t y, x;
+    uint8_t heading;
+    uint8_t alive;
+};
+extern struct bullet bullet[MAX_GUNNERS][MAX_BULLETS];
+
 
 typedef enum {
     MaybeTetris=0,
     MaybeSnake,
+    MaybeInvaders,
     MaybeHex,
     MaybeGreeble
 } GameToPlay;
@@ -36,6 +47,7 @@ typedef enum {
     MainMenu,
     Tetris,
     Snake,
+    Invaders,
     ChooseFilename,
     EditPalette,
     EditAnthem,
@@ -48,11 +60,13 @@ extern VisualMode previous_visual_mode;
 
 void game_switch(VisualMode new_visual_mode);
 
-#define GAMEPAD_PRESS(id, key) ((gamepad_buttons[id]) & (~old_gamepad[id]) & (gamepad_##key))
-#define GAMEPAD_PRESSING(id, key) ((gamepad_buttons[id]) & (gamepad_##key) & (~old_gamepad[id] | ((gamepad_press_wait == 0)*gamepad_##key)))
+#define GAMEPAD_PRESS(id, key) ((new_gamepad[id]) & (gamepad_##key))
+#define GAMEPAD_PRESSING(id, key) ((new_gamepad[id] & gamepad_##key) || (gamepad_press_waits[id] == 0 && (gamepad_buttons[id] & gamepad_##key)))
 #define GAMEPAD_PRESS_WAIT 8
+extern uint8_t gamepad_press_waits[2];
 extern uint8_t gamepad_press_wait;
 extern uint16_t old_gamepad[2];
+extern uint16_t new_gamepad[2];
 
 extern uint8_t player_message[2][16];
 extern uint8_t *player_message_start[2];

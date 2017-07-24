@@ -43,13 +43,6 @@ struct snake {
 };
 struct snake snake[4] CCM_MEMORY;
 
-struct bullet {
-    uint8_t y, x;
-    uint8_t heading;
-    uint8_t alive;
-};
-struct bullet bullet[4][BULLETS] CCM_MEMORY;
-
 int32_t option_increment(int v)
 {
     if (v < 5)
@@ -273,7 +266,6 @@ void snake_start()
     if (!game_torus)
         make_walls();
     make_food(snake_food_count);
-    chip_play_init(0);
 }
 
 void do_snake_dynamics()
@@ -588,22 +580,6 @@ int do_bullet_dynamics()
 
 void snake_controls()
 {
-    if (GAMEPAD_PRESS(0, start))
-    {
-        if (GAMEPAD_PRESSED(0, select) || game_win_state)
-        {
-            player_message[0][0] = 0;
-            game_paused = 0;
-            previous_visual_mode = None;
-            game_switch(MainMenu);
-            return;
-        }
-        // pause mode
-        chip_play = game_paused;
-        game_paused = 1 - game_paused;
-        return;
-    }
-
     if (handle_special_state())
         return;
 

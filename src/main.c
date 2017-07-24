@@ -11,6 +11,7 @@
 #include "menu.h"
 #include "tetris.h"
 #include "snake.h"
+#include "invaders.h"
 
 #include <string.h> // memcpy
 
@@ -22,9 +23,12 @@ int game_message_timeout CCM_MEMORY;
 uint8_t player_message[2][16] CCM_MEMORY;
 uint8_t *player_message_start[2] CCM_MEMORY;
 uint16_t old_gamepad[2] CCM_MEMORY;
-uint8_t gamepad_press_wait;
+uint16_t new_gamepad[2] CCM_MEMORY;
+uint8_t gamepad_press_waits[2] CCM_MEMORY;
+uint8_t gamepad_press_wait CCM_MEMORY;
 uint8_t game_to_play CCM_MEMORY;
 struct game game CCM_MEMORY;
+struct bullet bullet[MAX_GUNNERS][MAX_BULLETS] CCM_MEMORY;
 uint8_t game_paused CCM_MEMORY;
 int8_t game_win_state CCM_MEMORY;
 
@@ -94,6 +98,11 @@ void game_init()
 
 void game_frame()
 {
+    new_gamepad[0] = gamepad_buttons[0] & (~old_gamepad[0]);
+    new_gamepad[1] = gamepad_buttons[1] & (~old_gamepad[1]); 
+    old_gamepad[0] = gamepad_buttons[0];
+    old_gamepad[1] = gamepad_buttons[1]; 
+
     switch (visual_mode)
     {
     case MainMenu:
@@ -104,6 +113,9 @@ void game_frame()
         break;
     case Snake:
         snake_controls();
+        break;
+    case Invaders:
+        invaders_controls();
         break;
     case ChooseFilename:
         name_controls();
@@ -125,12 +137,13 @@ void game_frame()
             game_switch(MainMenu);
         break;
     }
-    
-    old_gamepad[0] = gamepad_buttons[0];
-    old_gamepad[1] = gamepad_buttons[1];
-    
+   
     if (gamepad_press_wait)
-        --gamepad_press_wait;
+        gamepad_press_waits[0] = --gamepad_press_wait;
+    else if (gamepad_press_waits[0])
+        gamepad_press_wait = --gamepad_press_waits[0];
+    if (gamepad_press_waits[1])
+        --gamepad_press_waits[1];
     
     if (game_message_timeout && --game_message_timeout == 0)
         game_message[0] = 0; 
@@ -150,6 +163,9 @@ void graph_line()
             break;
         case Snake:
             snake_line();
+            break;
+        case Invaders:
+            invaders_line();
             break;
         case ChooseFilename:
             name_line();
@@ -200,6 +216,9 @@ void graph_line()
 
 void game_switch(VisualMode new_visual_mode)
 {
+    if (new_visual_mode == visual_mode)
+        return;
+
     chip_kill();
     game_message[0] = 0;
 
@@ -211,12 +230,17 @@ void game_switch(VisualMode new_visual_mode)
     case Snake:
         snake_finalize();
         break;
+    case Invaders:
+        invaders_start();
+        break;
     default:
         break;
     }
 
     game_win_state = 0;
     game_paused = 0;
+    
+    visual_mode = new_visual_mode;
     switch (new_visual_mode)
     {
     case Tetris:
@@ -225,10 +249,14 @@ void game_switch(VisualMode new_visual_mode)
     case Snake:
         snake_start();
         break;
-    default:
+    case Invaders:
+        invaders_start();
         break;
+    default:
+        return;
     }
-    visual_mode = new_visual_mode;
+
+    chip_play_init(0);
 }
 
 void draw_parade(int line, uint8_t bg_color)
@@ -269,6 +297,24 @@ void end_player(int p)
 
 int handle_special_state()
 {
+    if (GAMEPAD_PRESS(0, start))
+    {
+        if (GAMEPAD_PRESSED(0, select) || game_win_state)
+        {
+            player_message[0][0] = 0;
+            game_paused = 0;
+            previous_visual_mode = None;
+            game_switch(MainMenu);
+        }
+        else
+        {
+            // pause mode
+            chip_play = game_paused;
+            game_paused = 1 - game_paused;
+        }
+        return 1;
+    }
+
     if (game_paused)
         return 1; 
     if (!game_win_state)
